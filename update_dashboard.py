@@ -105,7 +105,10 @@ def main():
         print(f"\nRepo: {repo}")
         get_workflow_runs(repo)
         # runs = get_workflow_runs(repo)
-
+    print("PRs of Repos: ")
+    for repo in repos:
+        print(f"\nRepo: {repo}")
+        get_prs(repo)
         
 
 
