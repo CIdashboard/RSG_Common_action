@@ -73,6 +73,30 @@ def get_workflow_runs(repo):
 
             )
 
+def get_prs(repo):
+    url = f"https://api.github.com/repos/{ORG}/{repo}/pulls"
+
+    params = {
+        "per_page": 50
+    }
+
+    response = requests.get(url, headers=HEADERS, params=params)
+
+    if response.status_code != 200:
+        print(f"Error in {repo}:", response.status_code)
+        return []
+
+    data = response.json()
+    prs_list=data.get("prs_list", [])
+    for pr in prs_list:
+
+            print("PR Number:",
+                pr["number"],
+                "PR Title:",
+                pr["title"],
+                "url:",
+                pr["url"],
+            )
 
 def main():
     repos = get_repos()
