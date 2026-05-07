@@ -32,12 +32,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
           GITHUB_ORG: CIdashboard
-          OUTPUT_DIR: data      
+          OUTPUT_DIR: source/data      
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs             
+          path: source     
 
   deploy:
     needs: build
