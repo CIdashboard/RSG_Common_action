@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Repo — CI Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/repo.css" />
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="header-logo">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.38.6.1.82-.26.82-.58v-2.03c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1.01-.32 3.3 1.23A11.5 11.5 0 0 1 12 6.8c1.02.005 2.05.138 3.01.404 2.28-1.552 3.285-1.23 3.285-1.23.645 1.66.24 2.88.12 3.18.77.84 1.235 1.91 1.235 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22v3.29c0 .32.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12"/>
+      </svg>
+    </div>
+    <h1>CI Dashboard</h1>
+    <span class="header-org" id="org-name">—</span>
+  </div>
+  <div class="sync-info">
+    <span class="sync-dot"></span>
+    <span id="sync-time">loading…</span>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- Back link -->
+  <a href="index.html" class="back-btn">
+    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+    All repositories
+  </a>
+
+  <!-- Top view chip -->
+  <div class="repo-top-switch">
+    <div class="repo-view-chip" id="repo-view-chip" role="tablist" aria-label="Repository view selector">
+      <button id="chip-runs" class="chip-btn active" type="button" role="tab" aria-selected="true">Workflow Runs</button>
+      <button id="chip-prs" class="chip-btn" type="button" role="tab" aria-selected="false">PRs</button>
+    </div>
+  </div>
+
+  <!-- Hero: repo name, status, headline stats -->
+  <div id="repo-hero">
+    <div class="repo-hero">
+      <div class="repo-hero-row">
+        <div class="repo-hero-left">
+          <div class="repo-hero-name" id="repo-title">Loading…</div>
+          <div id="repo-group-text" class="repo-group-text"></div>
+        </div>
+        <div class="repo-hero-right">
+          <div class="repo-hero-meta" id="repo-hero-sub"></div>
+        </div>
+      </div>
+      <div id="repo-stats-container" class="repo-stats-inline"></div>
+    </div>
+  </div>
+
+  <div class="repo-workbench-card">
+    <!-- Selector + date filters -->
+    <div class="repo-controls-section">
+      <div class="filter-row-top">
+        <div class="date-range-controls">
+          <label for="filter-from">From</label>
+          <input type="date" id="filter-from" />
+          <label for="filter-to">To</label>
+          <input type="date" id="filter-to" />
+          <button id="filter-apply" class="filter-btn primary" type="button">Apply</button>
+          <button id="filter-reset" class="filter-btn" type="button">Reset</button>
+        </div>
+
+        <div class="quick-range" aria-label="Quick date ranges">
+          <span class="filter-label">Quick:</span>
+          <button id="quick-7" class="quick-range-btn" type="button">7d</button>
+          <button id="quick-14" class="quick-range-btn" type="button">14d</button>
+          <button id="quick-30" class="quick-range-btn" type="button">30d</button>
+        </div>
+      </div>
+      <div id="filter-summary" class="filter-summary style-pill">All dates</div>
+    </div>
+
+    <!-- Runs + PRs tables -->
+    <div class="repo-data-section">
+      <div class="tab-content repo-tab-content active" id="tab-runs">
+        <div class="detail-loading">Loading runs…</div>
+      </div>
+      <div class="tab-content repo-tab-content" id="tab-prs">
+        <div class="detail-loading">Loading PRs…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Per-repo charts -->
+  <div class="repo-charts-section">
+    <div class="section-label" id="repo-analytics-title">Workflow Analytics</div>
+    <div class="repo-charts-grid">
+
+      <div class="chart-card analytics-card" data-view="runs">
+        <div class="chart-card-title">Run Success Trend <span style="font-size:10px;color:var(--text-3);font-weight:500;">(last 30 runs)</span></div>
+        <canvas id="chart-runs-trend" height="128"></canvas>
+      </div>
+
+      <div class="chart-card analytics-card" data-view="runs">
+        <div class="chart-card-title">Build Duration Trend <span style="font-size:10px;color:var(--text-3);font-weight:500;">(last 30 runs)</span></div>
+        <canvas id="chart-dur-trend" height="128"></canvas>
+      </div>
+
+      <div class="chart-card analytics-card" data-view="runs">
+        <div class="chart-card-title">Result Breakdown</div>
+        <canvas id="chart-breakdown" height="128"></canvas>
+      </div>
+
+      <div class="chart-card analytics-card" id="pr-chart-card" data-view="prs">
+        <div class="chart-card-title">PR Age <span style="font-size:10px;color:var(--text-3);font-weight:500;">(days open)</span></div>
+        <div id="chart-pr-wrap" style="position:relative;height:132px;">
+          <canvas id="chart-pr-age"></canvas>
+        </div>
+        <p id="pr-empty-state" class="state-msg" style="display:none;padding:24px 0 8px;">No open PRs in selected range.</p>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/repo.js"></script>
+</body>
+</html>
