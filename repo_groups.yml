@@ -1,0 +1,4 @@
+groups:
+  common:
+    - repo1
+    - repo2
