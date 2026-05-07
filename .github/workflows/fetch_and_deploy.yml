@@ -28,7 +28,7 @@ jobs:
         run: pip install requests pyyaml python-dotenv
 
       - name: Fetch metrics
-        run: python fetch_metrics_local.py
+        run: python fetch_metrics.py
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
           GITHUB_ORG: CIdashboard
