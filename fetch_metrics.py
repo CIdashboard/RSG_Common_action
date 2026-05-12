@@ -55,7 +55,6 @@ def load_groups():
             with open(path) as f:
                 config = yaml.safe_load(f) or {}
             
-            # New format: repos list with program_name per repo
             repos_list = config.get("repos", [])
             if repos_list and isinstance(repos_list, list):
                 mapping = {}
@@ -68,7 +67,6 @@ def load_groups():
                 if mapping:
                     return mapping
             
-            # Legacy format: groups dict with repo lists
             mapping = {}
             for group, repos in config.get("groups", {}).items():
                 for repo in (repos or []):
