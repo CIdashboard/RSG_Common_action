@@ -4,9 +4,7 @@ import time
 import yaml
 import requests
 from datetime import datetime, timezone, timedelta
-from dotenv import load_dotenv
 
-load_dotenv()
 
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 ORG          = os.environ.get("GITHUB_ORG")
