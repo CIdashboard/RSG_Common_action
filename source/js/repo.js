@@ -11,6 +11,9 @@ const pageState = {
   from: '',
   to: '',
   quickRange: '',
+  branchQuery: '',
+  resultFilter: 'all',
+  workflowFilter: 'all',
 };
 
 if (!repoName) {
@@ -144,6 +147,9 @@ function wireControls() {
   const quick30Btn = document.getElementById('quick-30');
   const runsChip = document.getElementById('chip-runs');
   const prsChip = document.getElementById('chip-prs');
+  const branchSearchInput = document.getElementById('workflow-branch-search');
+  const resultFilterSelect = document.getElementById('workflow-result-filter');
+  const workflowTypeSelect = document.getElementById('workflow-type-filter');
 
   const applyQuickRange = (days) => {
     const { from, to } = getLastNDaysRange(days);
@@ -191,9 +197,30 @@ function wireControls() {
     pageState.from = '';
     pageState.to = '';
     pageState.quickRange = '';
+    pageState.branchQuery = '';
+    pageState.resultFilter = 'all';
+    pageState.workflowFilter = 'all';
     if (fromInput) fromInput.value = '';
     if (toInput) toInput.value = '';
+    if (branchSearchInput) branchSearchInput.value = '';
+    if (resultFilterSelect) resultFilterSelect.value = 'all';
+    if (workflowTypeSelect) workflowTypeSelect.value = 'all';
     updateQuickRangeActiveState();
+    applyFiltersAndRender();
+  });
+
+  branchSearchInput?.addEventListener('input', () => {
+    pageState.branchQuery = branchSearchInput.value || '';
+    applyFiltersAndRender();
+  });
+
+  resultFilterSelect?.addEventListener('change', () => {
+    pageState.resultFilter = resultFilterSelect.value || 'all';
+    applyFiltersAndRender();
+  });
+
+  workflowTypeSelect?.addEventListener('change', () => {
+    pageState.workflowFilter = workflowTypeSelect.value || 'all';
     applyFiltersAndRender();
   });
 
@@ -209,13 +236,57 @@ function wireControls() {
 }
 
 function applyFiltersAndRender() {
-  pageState.filteredRuns = filterByDateRange(pageState.allRuns, pageState.from, pageState.to);
+  const runsInDateRange = filterByDateRange(pageState.allRuns, pageState.from, pageState.to);
+  pageState.filteredRuns = filterRuns(runsInDateRange, {
+    branchQuery: pageState.branchQuery,
+    resultFilter: pageState.resultFilter,
+    workflowFilter: pageState.workflowFilter,
+  });
   pageState.filteredPrs = filterByDateRange(pageState.allPrs, pageState.from, pageState.to);
 
   renderRunsTable(pageState.filteredRuns);
   renderPRsTable(pageState.filteredPrs);
   renderVisibleView();
   renderFilterSummary();
+}
+
+function filterRuns(runs, filters) {
+  const branchNeedle = (filters.branchQuery || '').trim().toLowerCase();
+
+  return (runs || []).filter(run => {
+    if (filters.resultFilter && filters.resultFilter !== 'all') {
+      if ((run?.conclusion || '') !== filters.resultFilter) return false;
+    }
+
+    if (branchNeedle) {
+      const branch = (run?.branch || '').toLowerCase();
+      if (!branch.includes(branchNeedle)) return false;
+    }
+
+    if (filters.workflowFilter && filters.workflowFilter !== 'all') {
+      const workflowFile = getWorkflowFileKey(run);
+      if (workflowFile !== filters.workflowFilter) return false;
+    }
+
+    return true;
+  });
+}
+
+function getWorkflowFileKey(run) {
+  const raw = String(
+    run?.workflow_file ||
+    run?.workflow ||
+    run?.path ||
+    run?.name ||
+    ''
+  ).toLowerCase();
+
+  if (raw.includes('pr_pipeline.yml') || raw.includes('pr pipeline')) return 'pr_pipeline.yml';
+  if (raw.includes('day_pipeline.yml') || raw.includes('day pipeline')) return 'day_pipeline.yml';
+  if (raw.includes('codeql.yml') || raw.includes('codeql') || raw.includes('ghas')) return 'codeql.yml';
+  if (raw.includes('ci_automation.yml') || raw.includes('ci automation')) return 'ci_automation.yml';
+
+  return '';
 }
 
 function getLastNDaysRange(days) {
@@ -270,6 +341,7 @@ function renderVisibleView() {
   const prsChip = document.getElementById('chip-prs');
   const chipWrap = document.getElementById('repo-view-chip');
   const analyticsTitle = document.getElementById('repo-analytics-title');
+  const workflowFilterRow = document.getElementById('workflow-filter-row');
 
   runsTab?.classList.toggle('active', isRuns);
   prsTab?.classList.toggle('active', !isRuns);
@@ -284,6 +356,10 @@ function renderVisibleView() {
 
   if (analyticsTitle) {
     analyticsTitle.textContent = isRuns ? 'Workflow Analytics' : 'PR Analytics';
+  }
+
+  if (workflowFilterRow) {
+    workflowFilterRow.classList.toggle('is-hidden', !isRuns);
   }
 
   document.querySelectorAll('.analytics-card').forEach(card => {
@@ -305,13 +381,37 @@ function renderFilterSummary() {
   summary.classList.remove('invalid');
 
   if (!pageState.from && !pageState.to) {
+    if (pageState.activeView === 'runs') {
+      const runClauses = [];
+      if (pageState.branchQuery.trim()) runClauses.push(`branch contains "${pageState.branchQuery.trim()}"`);
+      if (pageState.resultFilter !== 'all') runClauses.push(`result: ${pageState.resultFilter}`);
+      if (pageState.workflowFilter !== 'all') runClauses.push(`workflow: ${pageState.workflowFilter}`);
+
+      summary.textContent = runClauses.length > 0
+        ? `All dates · ${runClauses.join(' · ')}`
+        : 'All dates';
+      return;
+    }
+
     summary.textContent = 'All dates';
     return;
   }
 
   const from = pageState.from ? new Date(`${pageState.from}T00:00:00`).toLocaleDateString('en-IN') : 'start';
   const to = pageState.to ? new Date(`${pageState.to}T00:00:00`).toLocaleDateString('en-IN') : 'today';
-  summary.textContent = `Showing ${pageState.activeView === 'runs' ? 'runs' : 'PRs'} from ${from} to ${to}`;
+
+  if (pageState.activeView === 'runs') {
+    const runClauses = [];
+    if (pageState.branchQuery.trim()) runClauses.push(`branch contains "${pageState.branchQuery.trim()}"`);
+    if (pageState.resultFilter !== 'all') runClauses.push(`result: ${pageState.resultFilter}`);
+    if (pageState.workflowFilter !== 'all') runClauses.push(`workflow: ${pageState.workflowFilter}`);
+
+    const extra = runClauses.length > 0 ? ` · ${runClauses.join(' · ')}` : '';
+    summary.textContent = `Showing runs from ${from} to ${to}${extra}`;
+    return;
+  }
+
+  summary.textContent = `Showing PRs from ${from} to ${to}`;
 }
 
 // ── repo charts ────────────────────────────────────────────────────────────
@@ -383,7 +483,7 @@ function renderPRsTable(prs) {
     ? '<p class="state-msg">No open PRs.</p>'
     : `<div class="data-table-wrap"><table class="data-table">
         <thead><tr>
-          <th>#</th><th>Title</th><th>Author</th><th class="right">Days open</th>
+          <th>#</th><th>Title</th><th>Author</th><th>Base Branch</th><th>PR Branch</th><th class="right">Days open</th>
         </tr></thead>
         <tbody>
           ${prs.map(pr => `
@@ -391,6 +491,8 @@ function renderPRsTable(prs) {
               <td><a href="${pr.url}" target="_blank" rel="noopener">#${pr.number}</a></td>
               <td>${escapeHtml(pr.title || '—')}${pr.days_open > 7 ? '<span class="stale-badge">stale</span>' : ''}</td>
               <td>${escapeHtml(pr.author || '—')}</td>
+              <td class="branch-cell"><span class="truncate-inline" title="${escapeHtml(pr.base_branch || '—')}">${escapeHtml(pr.base_branch || '—')}</span></td>
+              <td class="branch-cell"><span class="truncate-inline" title="${escapeHtml(pr.pr_branch || '—')}">${escapeHtml(pr.pr_branch || '—')}</span></td>
               <td class="right ${pr.days_open > 7 ? 'c-red' : ''}">${pr.days_open}d</td>
             </tr>`).join('')}
         </tbody>
