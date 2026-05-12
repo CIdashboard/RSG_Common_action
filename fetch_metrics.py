@@ -4,6 +4,9 @@ import time
 import yaml
 import requests
 from datetime import datetime, timezone, timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
 
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 ORG          = os.environ.get("GITHUB_ORG")
@@ -55,6 +58,7 @@ def load_groups():
             with open(path) as f:
                 config = yaml.safe_load(f) or {}
             
+            # New format: repos list with program_name per repo
             repos_list = config.get("repos", [])
             if repos_list and isinstance(repos_list, list):
                 mapping = {}
@@ -67,6 +71,7 @@ def load_groups():
                 if mapping:
                     return mapping
             
+            # Legacy format: groups dict with repo lists
             mapping = {}
             for group, repos in config.get("groups", {}).items():
                 for repo in (repos or []):
@@ -173,6 +178,18 @@ def get_open_prs(repo_name):
     return len(pr_list), pr_list
 
 
+def get_merged_prs_total(repo_name):
+    """Fetch total merged PR count for a repo (all-time, not date-range bound)."""
+    data = gh_get(f"{BASE}/search/issues", {
+        "q": f"repo:{ORG}/{repo_name} is:pr is:merged",
+        "per_page": 1,
+    })
+    if not data:
+        return 0
+
+    return int(data.get("total_count") or 0)
+
+
 # ── status label ────────────────────────────────────────────────────────────
 
 def get_status(pass_rate):
@@ -207,6 +224,7 @@ def main():
 
         headline, run_list = get_workflow_runs(name)
         open_count, pr_list = get_open_prs(name)
+        merged_prs_total = get_merged_prs_total(name)
 
         pass_rate = headline["pass_rate"] if headline else None
 
@@ -222,6 +240,7 @@ def main():
             "repo":       name,
             "fetched_at": datetime.now(timezone.utc).isoformat(),
             "open_prs":   pr_list,
+            "merged_prs_total": merged_prs_total,
         })
 
         repo_metrics.append({
@@ -233,6 +252,7 @@ def main():
             "avg_duration_seconds": headline["avg_duration_seconds"] if headline else None,
             "last_run_at":          headline["last_run_at"]          if headline else None,
             "open_prs":             open_count,
+            "merged_prs_total":     merged_prs_total,
         })
 
         time.sleep(0.3)
