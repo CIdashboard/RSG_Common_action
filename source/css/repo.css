@@ -272,9 +272,67 @@
   color: #ef4444;
 }
 
+.workflow-filter-row {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 10px;
+}
+
+.workflow-filter-row.is-hidden {
+  display: none;
+}
+
+.workflow-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.workflow-filter-group label {
+  font-size: 11px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.workflow-filter-group input[type="search"],
+.workflow-filter-group select {
+  border: 0.5px solid var(--border-md);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 7px 8px;
+  height: 32px;
+}
+
+.workflow-filter-group input[type="search"]:focus,
+.workflow-filter-group select:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(23, 104, 189, 0.12);
+}
+
 /* ── runs + prs section ── */
 .repo-data-section {
   padding: 16px 18px;
+}
+
+.branch-cell {
+  max-width: 220px;
+}
+
+.truncate-inline {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
 }
 
 /* colour helpers (shared with dashboard) */
@@ -332,5 +390,13 @@
   .repo-view-chip {
     width: 100%;
     justify-content: center;
+  }
+
+  .branch-cell {
+    max-width: 160px;
+  }
+
+  .workflow-filter-row {
+    grid-template-columns: 1fr;
   }
 }
