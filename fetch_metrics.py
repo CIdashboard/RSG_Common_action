@@ -5,7 +5,6 @@ import yaml
 import requests
 from datetime import datetime, timezone, timedelta
 
-
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 ORG          = os.environ.get("GITHUB_ORG")
 OUTPUT_DIR   = os.environ.get("OUTPUT_DIR")
