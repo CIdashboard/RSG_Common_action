@@ -145,64 +145,7 @@ function renderDurationDistribution(canvasId, repos) {
   });
 }
 
-/**
- * Horizontal bar: top 10 slowest repos by avg build duration
- */
-function renderTop10Slowest(canvasId, repos, onClickRepo) {
-  _destroyChart(canvasId);
-  const c = chartColors();
-  const ctx = document.getElementById(canvasId);
-  if (!ctx) return;
 
-  const sorted = repos
-    .filter(r => r.avg_duration_seconds != null)
-    .sort((a, b) => b.avg_duration_seconds - a.avg_duration_seconds)
-    .slice(0, 10);
-
-  const labels  = sorted.map(r => r.name);
-  const data    = sorted.map(r => Math.round(r.avg_duration_seconds));
-  const colors  = sorted.map(r =>
-    r.status === 'passing' ? c.green : r.status === 'degraded' ? c.amber : c.red
-  );
-
-  _charts[canvasId] = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Avg build (s)',
-        data,
-        backgroundColor: colors,
-        borderRadius: 4,
-        borderSkipped: false,
-      }],
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: true,
-      onClick: (_, elements) => {
-        if (elements.length && onClickRepo) onClickRepo(sorted[elements[0].index].name);
-      },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` ${fmtDuration(ctx.parsed.x)}`,
-          },
-        },
-      },
-      scales: {
-        x: {
-          ticks: { color: c.text, font: { size: 11 }, callback: v => fmtDuration(v) },
-          grid: { color: c.grid },
-          beginAtZero: true,
-        },
-        y: { ticks: { color: c.text, font: { size: 11 } }, grid: { display: false } },
-      },
-    },
-  });
-}
 
 
 // ── REPO PAGE CHARTS ──────────────────────────────────────────────────────
