@@ -281,10 +281,10 @@ function getWorkflowFileKey(run) {
     ''
   ).toLowerCase();
 
-  if (raw.includes('pr_pipeline.yml') || raw.includes('pr pipeline')) return 'pr_pipeline.yml';
-  if (raw.includes('day_pipeline.yml') || raw.includes('day pipeline')) return 'day_pipeline.yml';
+  if (raw.includes('pr_pipeline.yml') || raw.includes('pr_pipeline')) return 'pr_pipeline.yml';
+  if (raw.includes('day_pipeline.yml') || raw.includes('day_pipeline')) return 'day_pipeline.yml';
   if (raw.includes('codeql.yml') || raw.includes('codeql') || raw.includes('ghas')) return 'codeql.yml';
-  if (raw.includes('ci_automation.yml') || raw.includes('ci automation')) return 'ci_automation.yml';
+  if (raw.includes('ci_automation.yml') || raw.includes('ci_automation')) return 'ci_automation.yml';
 
   return '';
 }
