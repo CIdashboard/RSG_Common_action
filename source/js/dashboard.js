@@ -1,6 +1,6 @@
 // ── state ─────────────────────────────────────────────────────────────────
 let allRepos     = [];
-let sortKey      = 'status';
+let sortKey      = 'group';
 let sortDir      = 1;
 let filterStatus = '';
 let filterGroup  = '';
@@ -32,7 +32,7 @@ function renderSummary(s, org, syncedAt) {
   document.getElementById('sync-time').textContent =
     syncedAt ? `Synced ${fmtDateTime(syncedAt)} IST` : 'Never synced';
 
-  const attention = (s.failing || 0) + (s.degraded || 0);
+  const reposWithOpenPrs = allRepos.filter(r => (r.open_prs || 0) > 0).length;
   const rClass    = s.pass_rate >= 90 ? 'c-green' : s.pass_rate >= 80 ? 'c-amber' : 'c-red';
 
   document.getElementById('summary-grid').innerHTML = `
@@ -52,9 +52,9 @@ function renderSummary(s, org, syncedAt) {
       <div class="stat-sub">across ${s.total_repos || 0} repos</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Needs attention</div>
-      <div class="stat-value ${attention > 0 ? 'c-red' : 'c-green'}">${attention}</div>
-      <div class="stat-sub">${s.failing || 0} failing · ${s.degraded || 0} degraded</div>
+      <div class="stat-label">Repos with PRs</div>
+      <div class="stat-value c-green">${reposWithOpenPrs || '—'}</div>
+      <div class="stat-sub">repositories with at least one open PR</div>
     </div>
   `;
 }
@@ -95,7 +95,6 @@ function filteredRepos() {
 
   return [...list].sort((a, b) => {
     let va = a[sortKey], vb = b[sortKey];
-    if (sortKey === 'status') { va = statusOrder(va); vb = statusOrder(vb); }
     if (va == null) return 1;
     if (vb == null) return -1;
     return (typeof va === 'string' ? va.localeCompare(vb) : va - vb) * sortDir;
@@ -127,7 +126,7 @@ function renderTable() {
     const barW       = repo.pass_rate != null ? Math.max(2, repo.pass_rate) : 0;
 
     const tr = document.createElement('tr');
-    tr.className = `repo-row${repo.status === 'failing' ? ' failing-row' : ''}`;
+    tr.className = 'repo-row';
     tr.dataset.repo = repo.name;
     tr.title = 'Click to view detailed repo information';
     tr.setAttribute('aria-label', `${repo.name} repository. Click for details.`);
@@ -140,7 +139,7 @@ function renderTable() {
              onclick="event.stopPropagation()">${repo.name}</a>
         </div>
       </td>
-      <td class="center"><span class="dot ${dotClass(repo.status)}" title="${repo.status}"></span></td>
+      <td class="mono">${repo.group || '—'}</td>
       <td class="right mono ${rateColorClass(repo.pass_rate)}">${fmtRate(repo.pass_rate)}</td>
       <td class="right mono">${fmtDuration(repo.avg_duration_seconds)}</td>
       <td class="right mono">${repo.open_prs ?? '—'}</td>
