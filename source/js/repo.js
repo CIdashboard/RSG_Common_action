@@ -15,7 +15,10 @@ const pageState = {
   branchQuery: '',
   resultFilter: 'all',
   workflowFilter: 'all',
+  runsPage: 1,
 };
+
+const RUNS_PER_PAGE = 25;
 
 if (!repoName) {
   document.body.innerHTML = '<div class="main"><p class="state-msg">No repo specified. <a href="index.html">Go back</a></p></div>';
@@ -245,6 +248,7 @@ function applyFiltersAndRender() {
     workflowFilter: pageState.workflowFilter,
   });
   pageState.filteredPrs = filterByDateRange(pageState.allPrs, pageState.from, pageState.to);
+  pageState.runsPage = 1;  // reset to first page whenever filters change
 
   renderRunsTable(pageState.filteredRuns);
   renderPRsTable(pageState.filteredPrs);
@@ -482,26 +486,76 @@ function renderRunsTable(runs) {
   const el = document.getElementById('tab-runs');
   if (!el) return;
 
-  el.innerHTML = runs.length === 0
-    ? '<p class="state-msg">No completed runs found.</p>'
-    : `<div class="data-table-wrap"><table class="data-table">
-        <thead><tr>
-          <th>Run ID</th><th>Workflow</th><th>Branch</th>
-          <th>Result</th><th>Duration</th><th>Actor</th><th>Run Date</th>
-        </tr></thead>
-        <tbody>
-          ${runs.map(r => `
-            <tr>
-              <td><a href="https://github.com/philips-internal/${repoName}/actions/runs/${r.id}" target="_blank" rel="noopener">#${r.id}</a></td>
-              <td>${escapeHtml(r.name || '—')}</td>
-              <td>${escapeHtml(r.branch || '—')}</td>
-              <td class="${r.conclusion === 'success' ? 'conclusion-pass' : r.conclusion === 'failure' ? 'conclusion-fail' : ''}">${escapeHtml(r.conclusion || '—')}</td>
-              <td>${fmtDuration(r.duration_seconds)}</td>
-              <td>${escapeHtml(r.actor || '—')}</td>
-              <td>${fmtDateTime(r.created_at)}</td>
-            </tr>`).join('')}
-        </tbody>
-      </table></div>`;
+  if (runs.length === 0) {
+    el.innerHTML = '<p class="state-msg">No completed runs found.</p>';
+    return;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(runs.length / RUNS_PER_PAGE));
+  pageState.runsPage = Math.min(Math.max(1, pageState.runsPage), totalPages);
+
+  const start    = (pageState.runsPage - 1) * RUNS_PER_PAGE;
+  const pageRuns = runs.slice(start, start + RUNS_PER_PAGE);
+
+  const tableHtml = `<div class="data-table-wrap"><table class="data-table">
+      <thead><tr>
+        <th>Run ID</th><th>Workflow</th><th>Branch</th>
+        <th>Result</th><th>Duration</th><th>Actor</th><th>Run Date</th>
+      </tr></thead>
+      <tbody>
+        ${pageRuns.map(r => `
+          <tr>
+            <td><a href="https://github.com/philips-internal/${repoName}/actions/runs/${r.id}" target="_blank" rel="noopener">#${r.id}</a></td>
+            <td>${escapeHtml(r.name || '—')}</td>
+            <td>${escapeHtml(r.branch || '—')}</td>
+            <td class="${r.conclusion === 'success' ? 'conclusion-pass' : r.conclusion === 'failure' ? 'conclusion-fail' : ''}">${escapeHtml(r.conclusion || '—')}</td>
+            <td>${fmtDuration(r.duration_seconds)}</td>
+            <td>${escapeHtml(r.actor || '—')}</td>
+            <td>${fmtDateTime(r.created_at)}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table></div>`;
+
+  const paginationHtml = buildRunsPagination(runs.length, totalPages);
+
+  el.innerHTML = tableHtml + paginationHtml;
+}
+
+function buildRunsPagination(total, totalPages) {
+  if (totalPages <= 1) return '';
+
+  const cur = pageState.runsPage;
+  const show = new Set([1, totalPages, cur, cur - 1, cur + 1].filter(p => p >= 1 && p <= totalPages));
+  const sorted = [...show].sort((a, b) => a - b);
+
+  const btn = (p, label, active, disabled) =>
+    `<button class="page-btn${active ? ' active' : ''}" ${disabled ? 'disabled' : ''}
+      onclick="goToRunsPage(${p})">${label}</button>`;
+
+  const pages = [];
+  pages.push(btn(cur - 1, '← Prev', false, cur === 1));
+
+  let prev = 0;
+  sorted.forEach(p => {
+    if (prev && p - prev > 1) pages.push(`<span class="page-ellipsis">…</span>`);
+    pages.push(btn(p, p, p === cur, false));
+    prev = p;
+  });
+
+  pages.push(btn(cur + 1, 'Next →', false, cur === totalPages));
+
+  const start = (cur - 1) * RUNS_PER_PAGE + 1;
+  const end   = Math.min(cur * RUNS_PER_PAGE, total);
+
+  return `<div class="runs-pagination">
+    <span class="runs-pagination-info">${start}–${end} of ${total} runs</span>
+    <div class="runs-pagination-btns">${pages.join('')}</div>
+  </div>`;
+}
+
+function goToRunsPage(page) {
+  pageState.runsPage = page;
+  renderRunsTable(pageState.filteredRuns);
 }
 
 // ── PRs table ──────────────────────────────────────────────────────────────
