@@ -4,9 +4,6 @@ import time
 import yaml
 import requests
 from datetime import datetime, timezone, timedelta
-from dotenv import load_dotenv
-
-load_dotenv()
 
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 ORG          = os.environ.get("GITHUB_ORG")
@@ -42,6 +39,45 @@ def gh_get(url, params=None):
         return response.json()
 
     return None
+
+
+def gh_get_all_pages(url, params=None, list_key=None):
+    """Fetch all pages of a paginated GitHub API endpoint."""
+    results = []
+    next_url = url
+    req_params = dict(params or {})
+    req_params.setdefault("per_page", 100)
+
+    while next_url:
+        for attempt in range(3):
+            response = requests.get(next_url, headers=HEADERS,
+                                    params=req_params if next_url == url else None,
+                                    timeout=20)
+            if response.status_code == 403:
+                reset = int(response.headers.get("X-RateLimit-Reset", time.time() + 60))
+                wait = max(reset - time.time(), 0) + 5
+                print(f"  Rate limited — sleeping {wait:.0f}s")
+                time.sleep(wait)
+                continue
+            if response.status_code == 404:
+                return results
+            response.raise_for_status()
+            data = response.json()
+            page_items = data.get(list_key, data) if list_key else data
+            if isinstance(page_items, list):
+                results.extend(page_items)
+            # follow Link: <url>; rel="next"
+            link = response.headers.get("Link", "")
+            next_url = None
+            for part in link.split(","):
+                part = part.strip()
+                if 'rel="next"' in part:
+                    next_url = part.split(";")[0].strip().strip("<>")
+            break
+        else:
+            break
+
+    return results
 
 
 # ── groups config ───────────────────────────────────────────────────────────
@@ -102,12 +138,14 @@ def get_repos(repo_names):
 
 
 def get_workflow_runs(repo_name):
-    """Fetch last 50 runs. Returns headline metrics + full run list for runs/."""
-    data = gh_get(f"{BASE}/repos/{ORG}/{repo_name}/actions/runs", {"per_page": 50})
-    if not data:
+    """Fetch ALL runs via pagination. Returns headline metrics + full run list for runs/."""
+    runs = gh_get_all_pages(
+        f"{BASE}/repos/{ORG}/{repo_name}/actions/runs",
+        list_key="workflow_runs",
+    )
+    if not runs:
         return None, []
 
-    runs      = data.get("workflow_runs", [])
     completed = [r for r in runs if r.get("status") == "completed"]
 
     if not completed:
@@ -129,8 +167,8 @@ def get_workflow_runs(repo_name):
     headline = {
         "pass_rate":            pass_rate,
         "avg_duration_seconds": avg_duration,
-        "last_run_at":          runs[0]["created_at"] if runs else None,
-        "last_status":          runs[0].get("conclusion") or runs[0].get("status") if runs else None,
+        "last_run_at":          completed[0]["created_at"] if completed else None,
+        "last_status":          completed[0].get("conclusion") or completed[0].get("status") if completed else None,
     }
 
     # full run list for runs/{repo}.json
