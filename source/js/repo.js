@@ -5,6 +5,7 @@ const pageState = {
   repo: null,
   allRuns: [],
   allPrs: [],
+  totalMergedPrs: 0,
   filteredRuns: [],
   filteredPrs: [],
   activeView: 'runs',
@@ -36,7 +37,7 @@ async function loadRepoPage() {
 
     const indexData = indexResp.ok ? await indexResp.json() : null;
     const runsData  = runsResp.ok  ? await runsResp.json()  : { runs: [] };
-    const prsData   = prsResp.ok   ? await prsResp.json()   : { open_prs: [] };
+    const prsData   = prsResp.ok   ? await prsResp.json()   : { open_prs: [], merged_prs_total: 0 };
 
     const repo = indexData?.repos?.find(r => r.name === repoName) || null;
     const runs = runsData.runs     || [];
@@ -45,6 +46,7 @@ async function loadRepoPage() {
     pageState.repo = repo;
     pageState.allRuns = runs;
     pageState.allPrs = prs;
+    pageState.totalMergedPrs = Number(prsData.merged_prs_total || 0);
 
     // header org name + sync time
     if (indexData) {
@@ -90,12 +92,12 @@ function renderHero(repo, runs, prs, activeView) {
         <div class="repo-stat-value">${fmtDuration(runAvgDuration)}</div>
       </div>
       <div class="repo-stat">
-        <div class="repo-stat-label">Displayed runs</div>
-        <div class="repo-stat-value">${runs.length}</div>
+        <div class="repo-stat-label">Successful runs</div>
+        <div class="repo-stat-value c-green">${runSuccessCount}</div>
       </div>
       <div class="repo-stat">
-        <div class="repo-stat-label">Open PRs (range)</div>
-        <div class="repo-stat-value ${stalePrs > 0 ? 'c-amber' : ''}">${prs.length}</div>
+        <div class="repo-stat-label">Total Workflow Runs</div>
+        <div class="repo-stat-value">${runs.length}</div>
       </div>
     `
     : `
@@ -108,12 +110,12 @@ function renderHero(repo, runs, prs, activeView) {
         <div class="repo-stat-value ${stalePrs > 0 ? 'c-red' : 'c-green'}">${stalePrs}</div>
       </div>
       <div class="repo-stat">
-        <div class="repo-stat-label">Displayed PRs</div>
-        <div class="repo-stat-value">${prs.length}</div>
+        <div class="repo-stat-label">Total Merged PRs</div>
+        <div class="repo-stat-value c-green">${pageState.totalMergedPrs}</div>
       </div>
       <div class="repo-stat">
-        <div class="repo-stat-label">Workflow runs (range)</div>
-        <div class="repo-stat-value">${runs.length}</div>
+        <div class="repo-stat-label">Total Open PRs</div>
+        <div class="repo-stat-value ${stalePrs > 0 ? 'c-amber' : ''}">${prs.length}</div>
       </div>
     `;
 
@@ -294,18 +296,22 @@ function getWorkflowFileKey(run) {
     ''
   ).toLowerCase();
 
+  // PR Pipeline (handles PR_pipeline, pr_pipeline, PR Pipeline, pr pipeline, etc.)
   if (raw.includes('pr_pipeline') || raw.includes('pr pipeline') || raw.includes('prpipeline')) {
     return 'pr_pipeline';
   }
   
+  // Day Pipeline (handles DAY_pipeline, day_pipeline, DAY Pipeline, day pipeline, etc.)
   if (raw.includes('day_pipeline') || raw.includes('day pipeline') || raw.includes('daypipeline')) {
     return 'day_pipeline';
   }
   
+  // CodeQL/GHAS
   if (raw.includes('codeql') || raw.includes('ghas')) {
     return 'codeql';
   }
   
+  // CI Automation
   if (raw.includes('ci_automation') || raw.includes('ci automation') || raw.includes('ciautomation')) {
     return 'ci_automation';
   }
