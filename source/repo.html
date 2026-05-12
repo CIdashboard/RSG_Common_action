@@ -80,6 +80,39 @@
         </div>
       </div>
       <div id="filter-summary" class="filter-summary style-pill">All dates</div>
+
+      <div class="workflow-filter-row" id="workflow-filter-row">
+        <div class="workflow-filter-group workflow-search-group">
+          <label for="workflow-branch-search">Branch</label>
+          <input
+            type="search"
+            id="workflow-branch-search"
+            placeholder="Search branch (e.g. main, release/*)"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="workflow-filter-group">
+          <label for="workflow-result-filter">Result</label>
+          <select id="workflow-result-filter">
+            <option value="all">All results</option>
+            <option value="success">Successful</option>
+            <option value="failure">Failed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+
+        <div class="workflow-filter-group">
+          <label for="workflow-type-filter">Workflow</label>
+          <select id="workflow-type-filter">
+            <option value="all">All workflows</option>
+            <option value="pr_pipeline.yml">PR Pipeline</option>
+            <option value="day_pipeline.yml">Day Pipeline</option>
+            <option value="codeql.yml">GHAS</option>
+            <option value="ci_automation.yml">CI Automation</option>
+          </select>
+        </div>
+      </div>
     </div>
 
     <!-- Runs + PRs tables -->
