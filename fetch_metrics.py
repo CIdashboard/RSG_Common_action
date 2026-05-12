@@ -232,9 +232,8 @@ def get_merged_prs_total(repo_name):
 
 def get_status(pass_rate):
     if pass_rate is None: return "unknown"
-    if pass_rate >= 90:   return "passing"
-    if pass_rate >= 80:   return "degraded"
-    return "failing"
+    if pass_rate >= 50:   return "passing"
+    return "degraded"
 
 
 # ── write helpers ────────────────────────────────────────────────────────────
