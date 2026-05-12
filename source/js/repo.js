@@ -487,18 +487,18 @@ function renderRunsTable(runs) {
     : `<div class="data-table-wrap"><table class="data-table">
         <thead><tr>
           <th>Run ID</th><th>Workflow</th><th>Branch</th>
-          <th>Result</th><th>Duration</th><th>Actor</th><th>Started</th>
+          <th>Result</th><th>Duration</th><th>Actor</th><th>Run Date</th>
         </tr></thead>
         <tbody>
           ${runs.map(r => `
             <tr>
-              <td><a href="https://github.com/CIDashboard/${repoName}/actions/runs/${r.id}" target="_blank" rel="noopener">#${r.id}</a></td>
+              <td><a href="https://github.com/philips-internal/${repoName}/actions/runs/${r.id}" target="_blank" rel="noopener">#${r.id}</a></td>
               <td>${escapeHtml(r.name || '—')}</td>
               <td>${escapeHtml(r.branch || '—')}</td>
               <td class="${r.conclusion === 'success' ? 'conclusion-pass' : r.conclusion === 'failure' ? 'conclusion-fail' : ''}">${escapeHtml(r.conclusion || '—')}</td>
               <td>${fmtDuration(r.duration_seconds)}</td>
               <td>${escapeHtml(r.actor || '—')}</td>
-              <td>${fmtRelative(r.created_at)}</td>
+              <td>${fmtDateTime(r.created_at)}</td>
             </tr>`).join('')}
         </tbody>
       </table></div>`;
@@ -513,7 +513,7 @@ function renderPRsTable(prs) {
     ? '<p class="state-msg">No open PRs.</p>'
     : `<div class="data-table-wrap"><table class="data-table">
         <thead><tr>
-          <th>#</th><th>Title</th><th>Author</th><th>Base Branch</th><th>PR Branch</th><th class="right">Days open</th>
+          <th>#</th><th>Title</th><th>Author</th><th>Base Branch</th><th>PR Branch</th><th>Created Date</th><th class="right">Days open</th>
         </tr></thead>
         <tbody>
           ${prs.map(pr => `
@@ -523,6 +523,7 @@ function renderPRsTable(prs) {
               <td>${escapeHtml(pr.author || '—')}</td>
               <td class="branch-cell"><span class="truncate-inline" title="${escapeHtml(pr.base_branch || '—')}">${escapeHtml(pr.base_branch || '—')}</span></td>
               <td class="branch-cell"><span class="truncate-inline" title="${escapeHtml(pr.pr_branch || '—')}">${escapeHtml(pr.pr_branch || '—')}</span></td>
+              <td>${fmtDateTime(pr.created_at)}</td>
               <td class="right ${pr.days_open > 7 ? 'c-red' : ''}">${pr.days_open}d</td>
             </tr>`).join('')}
         </tbody>
