@@ -100,7 +100,7 @@ body::after {
 /* ── badges ── */
 .badge      { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; white-space: nowrap; display: inline-block; }
 .badge-pass { background: var(--green-bg); color: var(--green); }
-.badge-deg  { background: var(--amber-bg); color: var(--amber); }
+.badge-deg  { background: var(--amber-bg);   color: var(--amber); }
 .badge-fail { background: var(--red-bg);   color: var(--red); }
 .badge-unk  { background: var(--bg-3);     color: var(--text-3); }
 
