@@ -54,13 +54,28 @@ def load_groups():
         try:
             with open(path) as f:
                 config = yaml.safe_load(f) or {}
+            
+            repos_list = config.get("repos", [])
+            if repos_list and isinstance(repos_list, list):
+                mapping = {}
+                for repo_entry in repos_list:
+                    if isinstance(repo_entry, dict):
+                        repo_name = repo_entry.get("name")
+                        program_name = repo_entry.get("program_name")
+                        if repo_name and program_name:
+                            mapping[repo_name] = program_name
+                if mapping:
+                    return mapping
+            
             mapping = {}
             for group, repos in config.get("groups", {}).items():
                 for repo in (repos or []):
                     mapping[repo] = group
-            if not mapping:
-                print(f"Warning: no repos configured under 'groups' in {path}")
-            return mapping
+            if mapping:
+                return mapping
+            
+            print(f"Warning: no repos configured in {path}")
+            return {}
         except FileNotFoundError:
             continue
 
@@ -212,7 +227,7 @@ def main():
         repo_metrics.append({
             "name":                 name,
             "full_name":            repo["full_name"],
-            "group":                repo_to_group[name],
+            "group":                repo_to_group.get(name),
             "status":               get_status(pass_rate),
             "pass_rate":            pass_rate,
             "avg_duration_seconds": headline["avg_duration_seconds"] if headline else None,
