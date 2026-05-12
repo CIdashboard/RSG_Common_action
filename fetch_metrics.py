@@ -148,6 +148,8 @@ def get_open_prs(repo_name):
             "number":     pr["number"],
             "title":      pr["title"],
             "author":     pr["user"]["login"] if pr.get("user") else None,
+            "base_branch": pr.get("base", {}).get("ref"),
+            "pr_branch":   pr.get("head", {}).get("ref"),
             "created_at": pr["created_at"],
             "url":        pr["html_url"],
             "days_open":  days_open,
