@@ -252,6 +252,7 @@ function applyFiltersAndRender() {
 
 function filterRuns(runs, filters) {
   const branchNeedle = (filters.branchQuery || '').trim().toLowerCase();
+  const selectedWorkflow = normalizeWorkflowFilter(filters.workflowFilter);
 
   return (runs || []).filter(run => {
     if (filters.resultFilter && filters.resultFilter !== 'all') {
@@ -263,13 +264,25 @@ function filterRuns(runs, filters) {
       if (!branch.includes(branchNeedle)) return false;
     }
 
-    if (filters.workflowFilter && filters.workflowFilter !== 'all') {
+    if (selectedWorkflow && selectedWorkflow !== 'all') {
       const workflowFile = getWorkflowFileKey(run);
-      if (workflowFile !== filters.workflowFilter) return false;
+      if (workflowFile !== selectedWorkflow) return false;
     }
 
     return true;
   });
+}
+
+function normalizeWorkflowFilter(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw || raw === 'all') return 'all';
+
+  if (raw === 'pr_pipeline.yml' || raw === 'pr_pipeline' || raw === 'pr pipeline') return 'pr_pipeline';
+  if (raw === 'day_pipeline.yml' || raw === 'day_pipeline' || raw === 'day pipeline') return 'day_pipeline';
+  if (raw === 'codeql.yml' || raw === 'codeql' || raw === 'ghas') return 'codeql';
+  if (raw === 'ci_automation.yml' || raw === 'ci_automation' || raw === 'ci automation') return 'ci_automation';
+
+  return raw;
 }
 
 function getWorkflowFileKey(run) {
@@ -282,19 +295,19 @@ function getWorkflowFileKey(run) {
   ).toLowerCase();
 
   if (raw.includes('pr_pipeline') || raw.includes('pr pipeline') || raw.includes('prpipeline')) {
-    return 'pr_pipeline.yml';
+    return 'pr_pipeline';
   }
   
   if (raw.includes('day_pipeline') || raw.includes('day pipeline') || raw.includes('daypipeline')) {
-    return 'day_pipeline.yml';
+    return 'day_pipeline';
   }
   
   if (raw.includes('codeql') || raw.includes('ghas')) {
-    return 'codeql.yml';
+    return 'codeql';
   }
   
   if (raw.includes('ci_automation') || raw.includes('ci automation') || raw.includes('ciautomation')) {
-    return 'ci_automation.yml';
+    return 'ci_automation';
   }
 
   return '';
