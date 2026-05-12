@@ -31,7 +31,7 @@ jobs:
         run: python fetch_metrics.py
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
-          GITHUB_ORG: CIdashboard
+          GITHUB_ORG: philips-internal
           OUTPUT_DIR: source/data
           GROUPS_PATH: repo_groups.yml
 
