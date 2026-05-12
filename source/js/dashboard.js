@@ -33,7 +33,7 @@ function renderSummary(s, org, syncedAt) {
     syncedAt ? `Synced ${fmtDateTime(syncedAt)} IST` : 'Never synced';
 
   const reposWithOpenPrs = allRepos.filter(r => (r.open_prs || 0) > 0).length;
-  const rClass    = s.pass_rate >= 90 ? 'c-green' : s.pass_rate >= 80 ? 'c-amber' : 'c-red';
+  const rClass    = s.pass_rate >= 50 ? 'c-green' : 'c-amber';
 
   document.getElementById('summary-grid').innerHTML = `
     <div class="stat-card">
@@ -76,14 +76,7 @@ function renderCharts(summary, repos) {
   renderOrgDonut('chart-donut', summary);
   renderPassDistribution('chart-pass-dist', repos);
   renderDurationDistribution('chart-dur-dist', repos);
-  renderTop10Slowest('chart-top10', repos, repoName => {
-    // scroll to table, expand that repo
-    document.getElementById('repo-table-section').scrollIntoView({ behavior: 'smooth' });
-    setTimeout(() => {
-      const row = document.querySelector(`[data-repo="${repoName}"]`);
-      if (row) { row.click(); row.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-    }, 400);
-  });
+
 }
 
 // ── filter + sort ─────────────────────────────────────────────────────────
@@ -222,7 +215,7 @@ document.querySelectorAll('.pill').forEach(pill => {
     filterStatus = pill.dataset.status;
     currentPage  = 1;
     document.querySelectorAll('.pill').forEach(p => p.className = 'pill');
-    const cls = { '': 'active-all', passing: 'active-pass', degraded: 'active-deg', failing: 'active-fail' }[filterStatus] || 'active-all';
+    const cls = { '': 'active-all', passing: 'active-pass', degraded: 'active-deg' }[filterStatus] || 'active-all';
     pill.classList.add(cls);
     renderTable();
   });
