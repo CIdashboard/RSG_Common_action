@@ -7,6 +7,8 @@ repos:
    program_name: CLOUD
  - name: psi2m-IoT_RSM.AssetManagementService
    program_name: RSM
+ - name: psi2m-IoT_RSM.RemoteSoftwareManagementUI
+   program_name: RSM
  - name: HSP_PS_RSGBridge_ActiveDevicesManager
    program_name: RSGBridge
  
